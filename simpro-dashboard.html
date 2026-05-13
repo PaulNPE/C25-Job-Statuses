@@ -274,6 +274,10 @@
           <input type="text" id="apiBase" placeholder="https://yourcompany.simprosuite.com" />
         </div>
         <div class="cfg-field">
+          <label>Company ID</label>
+          <input type="text" id="companyId" placeholder="e.g. 1, 2, 3" />
+        </div>
+        <div class="cfg-field">
           <label>API key</label>
           <input type="password" id="apiKey" placeholder="Bearer token" />
         </div>
@@ -593,30 +597,32 @@ function loadDemo() {
 async function connectAPI() {
   const base  = document.getElementById('apiBase').value.trim().replace(/\/+$/,'');
   const key   = document.getElementById('apiKey').value.trim();
+  const companyId = document.getElementById('companyId').value.trim() || '0';
   MARGIN_THRESHOLD = parseInt(document.getElementById('marginThreshold').value) || 20;
   if (!base || !key) { showError('Please enter both the base URL and API key.'); return; }
   // Show CORS notice when connecting from external domain
   const notice = document.getElementById('corsNotice');
   document.getElementById('thisOrigin').textContent = location.origin;
   notice.style.display = 'block';
-  await loadData(base, key);
+  await loadData(base, key, companyId);
 }
 
-async function loadData(base, key) {
+async function loadData(base, key, companyId) {
   base = base || localStorage.getItem('simpro_base');
   key  = key  || localStorage.getItem('simpro_key');
+  companyId = companyId || localStorage.getItem('simpro_company') || '0';
   if (!base || !key) { loadDemo(); return; }
 
   document.getElementById('loadingState').style.display = 'block';
   document.getElementById('ccChips').innerHTML = '<span class="cc-loading"><span class="spinner"></span> Loading cost centres…</span>';
 
   try {
-    const headers = { 'Authorization': key.startsWith('Bearer ') ? key : 'Bearer '+key, 'Content-Type':'application/json' };
+    const headers = { 'x-simpro-base': base, 'x-api-key': key.startsWith('Bearer ') ? key : 'Bearer '+key, 'Content-Type':'application/json' };
 
     const [ccRes, svcRes, projRes] = await Promise.all([
-      fetch(base+'/api/v1.0/companies/0/costCentres/?pageSize=250', { headers }),
-      fetch(base+'/api/v1.0/companies/0/jobs/?pageSize=250&jobType=Service', { headers }),
-      fetch(base+'/api/v1.0/companies/0/jobs/?pageSize=250&jobType=Project', { headers })
+      fetch(`/api-proxy/api/v1.0/companies/${companyId}/costCentres/?pageSize=250`, { headers }),
+      fetch(`/api-proxy/api/v1.0/companies/${companyId}/jobs/?pageSize=250&jobType=Service`, { headers }),
+      fetch(`/api-proxy/api/v1.0/companies/${companyId}/jobs/?pageSize=250&jobType=Project`, { headers })
     ]);
 
     if (ccRes.ok) {
@@ -669,6 +675,7 @@ async function loadData(base, key) {
 
     localStorage.setItem('simpro_base', base);
     localStorage.setItem('simpro_key', key);
+    localStorage.setItem('simpro_company', companyId);
     document.getElementById('liveStatus').className = 'badge badge-live';
     document.getElementById('liveStatus').textContent = 'Live';
     document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
@@ -691,9 +698,11 @@ document.getElementById('thisOrigin').textContent = location.origin;
 // Restore saved credentials if available
 const savedBase = localStorage.getItem('simpro_base');
 const savedKey  = localStorage.getItem('simpro_key');
+const savedCompany = localStorage.getItem('simpro_company');
 if (savedBase) document.getElementById('apiBase').value = savedBase;
+if (savedCompany) document.getElementById('companyId').value = savedCompany;
 if (savedBase && savedKey) {
-  loadData(savedBase, savedKey);
+  loadData(savedBase, savedKey, savedCompany||'0');
 } else {
   loadDemo();
 }
