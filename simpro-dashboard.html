@@ -3,708 +3,423 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SimPro Dashboard</title>
+  <title>SimPro WIP Dashboard</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
     :root {
-      --green: #1D9E75;
-      --green-light: #E1F5EE;
-      --green-mid: #9FE1CB;
-      --green-dark: #0F6E56;
-      --green-text: #3B6D11;
-      --amber: #EF9F27;
-      --amber-light: #FAEEDA;
-      --amber-mid: #FAC775;
-      --amber-dark: #854F0B;
-      --red: #E24B4A;
-      --red-light: #FCEBEB;
-      --red-mid: #F09595;
-      --red-dark: #A32D2D;
-      --blue-light: #E6F1FB;
-      --blue: #378ADD;
-      --blue-dark: #185FA5;
-      --purple-light: #EEEDFE;
-      --purple: #534AB7;
-      --teal-light: #E1F5EE;
-      --teal: #1D9E75;
-      --gray-50: #F1EFE8;
-      --gray-100: #D3D1C7;
-      --gray-400: #888780;
-      --gray-600: #5F5E5A;
-      --radius-sm: 6px;
-      --radius-md: 8px;
-      --radius-lg: 12px;
+      --green:#1D9E75;--green-light:#E1F5EE;--green-mid:#9FE1CB;--green-dark:#0F6E56;--green-text:#3B6D11;
+      --amber:#EF9F27;--amber-light:#FAEEDA;--amber-mid:#FAC775;--amber-dark:#854F0B;
+      --red:#E24B4A;--red-light:#FCEBEB;--red-mid:#F09595;--red-dark:#A32D2D;
+      --blue-light:#E6F1FB;--blue:#378ADD;--blue-dark:#185FA5;
+      --gray-50:#F8F7F4;--gray-100:#D3D1C7;--gray-400:#888780;--gray-600:#5F5E5A;
+      --radius-md:8px;--radius-lg:12px;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      font-size: 14px;
-      background: #F8F7F4;
-      color: #2C2C2A;
-      min-height: 100vh;
-    }
-
-    /* ── Layout ── */
-    .app { display: flex; flex-direction: column; min-height: 100vh; }
-
-    header {
-      background: #fff;
-      border-bottom: 0.5px solid #D3D1C7;
-      padding: 0 2rem;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .logo { font-size: 17px; font-weight: 600; color: #2C2C2A; display: flex; align-items: center; gap: 8px; }
-    .logo span { color: var(--green); }
-    .logo-icon { width: 28px; height: 28px; background: var(--green); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; }
-
-    .header-right { display: flex; align-items: center; gap: 8px; }
-
-    .badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
-    .badge-live { background: var(--green-light); color: var(--green-dark); }
-    .badge-live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--green-text); display: inline-block; animation: pulse 2s infinite; }
-    .badge-demo { background: var(--amber-light); color: var(--amber-dark); }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-    .icon-btn {
-      font-size: 12px; color: #5F5E5A; cursor: pointer;
-      background: #fff; border: 0.5px solid #B4B2A9;
-      padding: 5px 12px; border-radius: var(--radius-md);
-      display: flex; align-items: center; gap: 5px;
-      transition: background .15s;
-    }
-    .icon-btn:hover { background: #F1EFE8; }
-
-    main { flex: 1; padding: 1.5rem 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
-
-    /* ── Config panel ── */
-    .config-panel {
-      background: #fff; border: 0.5px solid #B4B2A9;
-      border-radius: var(--radius-lg); padding: 1.25rem 1.5rem;
-      margin-bottom: 1.25rem; display: none;
-    }
-    .config-panel.open { display: block; }
-    .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-    .cfg-field label { font-size: 11px; color: #5F5E5A; display: block; margin-bottom: 4px; font-weight: 500; }
-    .cfg-field input {
-      width: 100%; font-size: 13px; padding: 7px 10px;
-      border-radius: var(--radius-md); border: 0.5px solid #B4B2A9;
-      background: #F8F7F4; color: #2C2C2A; outline: none;
-    }
-    .cfg-field input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
-    .config-row2 { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-    .config-row2 label { font-size: 11px; color: #5F5E5A; font-weight: 500; }
-    .config-row2 input[type=number] {
-      width: 64px; font-size: 13px; padding: 5px 8px;
-      border-radius: var(--radius-md); border: 0.5px solid #B4B2A9;
-      background: #F8F7F4; color: #2C2C2A; outline: none;
-    }
-    .btn-primary {
-      background: var(--green); color: #fff; border: none;
-      padding: 7px 18px; border-radius: var(--radius-md);
-      font-size: 13px; cursor: pointer; font-weight: 500;
-      display: inline-flex; align-items: center; gap: 6px;
-      transition: background .15s;
-    }
-    .btn-primary:hover { background: var(--green-dark); }
-    .btn-ghost {
-      background: none; border: 0.5px solid #B4B2A9; color: #5F5E5A;
-      padding: 7px 18px; border-radius: var(--radius-md);
-      font-size: 13px; cursor: pointer; transition: background .15s;
-    }
-    .btn-ghost:hover { background: #F1EFE8; }
-
-    /* ── Cost centre bar ── */
-    .cc-bar {
-      background: #fff; border: 0.5px solid #D3D1C7;
-      border-radius: var(--radius-lg); padding: 10px 14px;
-      margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    }
-    .cc-bar-label { font-size: 11px; color: #5F5E5A; white-space: nowrap; font-weight: 500; display: flex; align-items: center; gap: 5px; }
-    .cc-scroll { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
-    .cc-chip {
-      font-size: 12px; padding: 5px 14px; border-radius: 20px;
-      border: 0.5px solid #B4B2A9; background: #F8F7F4; color: #5F5E5A;
-      cursor: pointer; transition: all .15s; white-space: nowrap;
-      display: inline-flex; align-items: center; gap: 5px;
-    }
-    .cc-chip:hover { background: #F1EFE8; }
-    .cc-chip.selected { background: var(--green); color: #fff; border-color: var(--green); font-weight: 500; }
-    .cc-chip.all { border-style: dashed; }
-    .cc-loading { font-size: 11px; color: #888780; display: flex; align-items: center; gap: 6px; }
-
-    /* ── Metrics ── */
-    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
-    .metric { background: #fff; border: 0.5px solid #D3D1C7; border-radius: var(--radius-md); padding: 14px 16px; }
-    .metric-label { font-size: 11px; color: #5F5E5A; margin-bottom: 6px; font-weight: 500; }
-    .metric-value { font-size: 22px; font-weight: 600; color: #2C2C2A; line-height: 1; }
-    .metric-sub { font-size: 11px; color: #888780; margin-top: 4px; }
-    .metric.warn { border-left: 3px solid var(--amber); }
-    .metric.danger { border-left: 3px solid var(--red); }
-
-    /* ── Risk summary ── */
-    .section-label { font-size: 11px; font-weight: 600; color: #5F5E5A; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; margin-top: 1.25rem; }
-    .risk-summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
-    .risk-card { border-radius: var(--radius-md); padding: 14px 16px; border: 0.5px solid; }
-    .risk-card.green { background: var(--green-light); border-color: var(--green-mid); }
-    .risk-card.amber { background: var(--amber-light); border-color: var(--amber-mid); }
-    .risk-card.red { background: var(--red-light); border-color: #F7C1C1; }
-    .risk-card-num { font-size: 26px; font-weight: 600; line-height: 1; margin-bottom: 4px; }
-    .risk-card.green .risk-card-num { color: var(--green-dark); }
-    .risk-card.amber .risk-card-num { color: var(--amber-dark); }
-    .risk-card.red .risk-card-num { color: var(--red-dark); }
-    .risk-card-label { font-size: 12px; }
-    .risk-card.green .risk-card-label { color: var(--green-dark); }
-    .risk-card.amber .risk-card-label { color: var(--amber-dark); }
-    .risk-card.red .risk-card-label { color: var(--red-dark); }
-
-    /* ── Filters ── */
-    .filters { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
-    .filter-chip {
-      font-size: 12px; padding: 5px 13px; border-radius: 20px;
-      border: 0.5px solid #B4B2A9; background: #fff; color: #5F5E5A;
-      cursor: pointer; transition: all .15s;
-    }
-    .filter-chip:hover { background: #F1EFE8; }
-    .filter-chip.active { background: var(--green); color: #fff; border-color: var(--green); }
-    .filter-chip.active-warn { background: var(--amber); color: #fff; border-color: var(--amber); }
-    .filter-right { margin-left: auto; font-size: 11px; color: #888780; }
-
-    /* ── Table ── */
-    .table-wrap { background: #fff; border: 0.5px solid #D3D1C7; border-radius: var(--radius-lg); overflow: hidden; overflow-x: auto; margin-bottom: 1.25rem; }
-    .job-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; min-width: 860px; }
-    .job-table th {
-      text-align: left; font-size: 10px; font-weight: 600; color: #5F5E5A;
-      padding: 8px 10px; border-bottom: 0.5px solid #D3D1C7;
-      text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
-      background: #F8F7F4;
-    }
-    .job-table td { padding: 10px; border-bottom: 0.5px solid #F1EFE8; color: #2C2C2A; vertical-align: middle; }
-    .job-table tr:last-child td { border-bottom: none; }
-    .job-table tbody tr:hover td { background: #FAFAF8; }
-    .job-table tr.row-risk-high td:first-child { border-left: 3px solid var(--red); }
-    .job-table tr.row-risk-med td:first-child { border-left: 3px solid var(--amber); }
-
-    .col-id{width:7%}.col-name{width:20%}.col-type{width:6%}.col-status{width:9%}.col-cc{width:11%}.col-me{width:7%}.col-ma{width:7%}.col-lab{width:12%}.col-pla{width:12%}.col-prog{width:5%}.col-due{width:4%}
-
-    .pill { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; display: inline-block; white-space: nowrap; }
-    .status-pending { background: var(--amber-light); color: var(--amber-dark); }
-    .status-active { background: var(--green-light); color: var(--green-dark); }
-    .status-complete { background: #EAF3DE; color: var(--green-text); }
-    .status-overdue { background: var(--red-light); color: var(--red-dark); }
-    .type-service { background: var(--blue-light); color: var(--blue-dark); }
-    .type-project { background: var(--purple-light); color: var(--purple); }
-
-    .margin-good { color: var(--green-text); font-weight: 600; }
-    .margin-warn { color: var(--amber-dark); font-weight: 600; }
-    .margin-danger { color: var(--red-dark); font-weight: 600; }
-
-    .ind-bar { height: 4px; border-radius: 2px; background: #D3D1C7; position: relative; overflow: hidden; margin-top: 3px; }
-    .ind-fill { height: 100%; border-radius: 2px; position: absolute; left: 0; top: 0; }
-    .ind-label { font-size: 10px; display: flex; justify-content: space-between; color: #888780; }
-    .ind-label .over { color: var(--red-dark); font-weight: 600; }
-    .ind-label .under { color: var(--amber-dark); font-weight: 600; }
-    .ind-label .ok { color: var(--green-text); }
-
-    .progress-bar { background: #D3D1C7; border-radius: 3px; height: 5px; width: 100%; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 3px; background: var(--green); }
-    .progress-fill.warn { background: var(--amber); }
-    .progress-fill.danger { background: var(--red); }
-
-    /* ── Charts ── */
-    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .chart-card { background: #fff; border: 0.5px solid #D3D1C7; border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; }
-    .chart-title { font-size: 13px; font-weight: 600; color: #2C2C2A; margin-bottom: 10px; }
-    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; font-size: 11px; color: #5F5E5A; }
-    .legend span { display: flex; align-items: center; gap: 4px; }
-    .legend-sq { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
-
-    /* ── Misc ── */
-    .error-banner { background: var(--red-light); color: var(--red-dark); border-radius: var(--radius-md); padding: 10px 14px; font-size: 13px; margin-bottom: 1rem; display: none; border: 0.5px solid #F7C1C1; }
-    .loading-state { text-align: center; padding: 2.5rem; color: #5F5E5A; font-size: 13px; display: none; }
-    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #D3D1C7; border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .empty-state { text-align: center; padding: 2.5rem; color: #888780; font-size: 13px; }
-
-    /* CORS notice */
-    .cors-notice {
-      background: #E6F1FB; border: 0.5px solid #B5D4F4; border-radius: var(--radius-md);
-      padding: 10px 14px; font-size: 12px; color: var(--blue-dark); margin-bottom: 1rem; display: none;
-    }
-
-    @media (max-width: 700px) {
-      main { padding: 1rem; }
-      .chart-row { grid-template-columns: 1fr; }
-      .risk-summary { grid-template-columns: 1fr; }
-      .config-grid { grid-template-columns: 1fr; }
-      header { padding: 0 1rem; }
-    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:14px;background:var(--gray-50);color:#2C2C2A;min-height:100vh;}
+    header{background:#fff;border-bottom:0.5px solid var(--gray-100);padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .logo{font-size:17px;font-weight:600;color:#2C2C2A;display:flex;align-items:center;gap:8px;}
+    .logo span{color:var(--green);}
+    .logo-icon{width:28px;height:28px;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;}
+    .badge{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;}
+    .badge-loaded{background:var(--green-light);color:var(--green-dark);display:flex;align-items:center;gap:4px;}
+    .badge-loaded::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green-text);display:inline-block;}
+    .badge-empty{background:var(--amber-light);color:var(--amber-dark);}
+    main{padding:1.5rem 2rem;max-width:1400px;margin:0 auto;width:100%;}
+    .upload-zone{background:#fff;border:2px dashed var(--gray-100);border-radius:var(--radius-lg);padding:2rem;text-align:center;margin-bottom:1.25rem;transition:border-color .2s,background .2s;cursor:pointer;position:relative;}
+    .upload-zone:hover,.upload-zone.drag-over{border-color:var(--green);background:var(--green-light);}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .upload-icon{font-size:30px;color:var(--gray-400);margin-bottom:6px;}
+    .upload-title{font-size:14px;font-weight:600;color:#2C2C2A;margin-bottom:3px;}
+    .upload-sub{font-size:12px;color:var(--gray-400);}
+    .upload-loaded{border-style:solid;border-color:var(--green);background:var(--green-light);}
+    .upload-loaded .upload-icon,.upload-loaded .upload-title,.upload-loaded .upload-sub{color:var(--green-dark);}
+    .settings-bar{background:#fff;border:0.5px solid var(--gray-100);border-radius:var(--radius-lg);padding:10px 14px;margin-bottom:1.25rem;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+    .setting{display:flex;align-items:center;gap:6px;}
+    .setting label{font-size:11px;color:var(--gray-600);font-weight:500;white-space:nowrap;}
+    .setting input[type=number]{width:60px;font-size:12px;padding:4px 8px;border-radius:var(--radius-md);border:0.5px solid #B4B2A9;background:var(--gray-50);color:#2C2C2A;outline:none;}
+    .setting select{font-size:12px;padding:4px 8px;border-radius:var(--radius-md);border:0.5px solid #B4B2A9;background:var(--gray-50);color:#2C2C2A;outline:none;cursor:pointer;}
+    .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem;}
+    .metric{background:#fff;border:0.5px solid var(--gray-100);border-radius:var(--radius-md);padding:14px 16px;}
+    .metric-label{font-size:11px;color:var(--gray-600);margin-bottom:6px;font-weight:500;}
+    .metric-value{font-size:20px;font-weight:600;color:#2C2C2A;line-height:1;}
+    .metric-sub{font-size:11px;color:var(--gray-400);margin-top:4px;}
+    .metric.warn{border-left:3px solid var(--amber);}
+    .metric.danger{border-left:3px solid var(--red);}
+    .metric.good{border-left:3px solid var(--green);}
+    .section-label{font-size:11px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;margin-top:1.25rem;}
+    .risk-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;}
+    .risk-card{border-radius:var(--radius-md);padding:12px 14px;border:0.5px solid;}
+    .risk-card.green{background:var(--green-light);border-color:var(--green-mid);}
+    .risk-card.amber{background:var(--amber-light);border-color:var(--amber-mid);}
+    .risk-card.red{background:var(--red-light);border-color:#F7C1C1;}
+    .risk-card.blue{background:var(--blue-light);border-color:#B5D4F4;}
+    .risk-card-num{font-size:24px;font-weight:600;line-height:1;margin-bottom:3px;}
+    .risk-card.green .risk-card-num{color:var(--green-dark);}
+    .risk-card.amber .risk-card-num{color:var(--amber-dark);}
+    .risk-card.red .risk-card-num{color:var(--red-dark);}
+    .risk-card.blue .risk-card-num{color:var(--blue-dark);}
+    .risk-card-label{font-size:11px;}
+    .risk-card.green .risk-card-label{color:var(--green-dark);}
+    .risk-card.amber .risk-card-label{color:var(--amber-dark);}
+    .risk-card.red .risk-card-label{color:var(--red-dark);}
+    .risk-card.blue .risk-card-label{color:var(--blue-dark);}
+    .filters{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center;}
+    .filter-chip{font-size:12px;padding:5px 13px;border-radius:20px;border:0.5px solid #B4B2A9;background:#fff;color:var(--gray-600);cursor:pointer;transition:all .15s;}
+    .filter-chip:hover{background:var(--gray-50);}
+    .filter-chip.active{background:var(--green);color:#fff;border-color:var(--green);}
+    .filter-chip.active-warn{background:var(--amber);color:#fff;border-color:var(--amber);}
+    .filter-chip.active-red{background:var(--red);color:#fff;border-color:var(--red);}
+    .filter-right{margin-left:auto;font-size:11px;color:var(--gray-400);}
+    .table-wrap{background:#fff;border:0.5px solid var(--gray-100);border-radius:var(--radius-lg);overflow:hidden;overflow-x:auto;margin-bottom:1.25rem;}
+    .job-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;min-width:1000px;}
+    .job-table th{text-align:left;font-size:10px;font-weight:600;color:var(--gray-600);padding:8px 10px;border-bottom:0.5px solid var(--gray-100);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;background:var(--gray-50);cursor:pointer;user-select:none;}
+    .job-table th:hover{background:#F1EFE8;}
+    .job-table td{padding:9px 10px;border-bottom:0.5px solid #F1EFE8;color:#2C2C2A;vertical-align:middle;}
+    .job-table tr:last-child td{border-bottom:none;}
+    .job-table tbody tr:hover td{background:#FAFAF8;}
+    .job-table tr.row-risk-high td:first-child{border-left:3px solid var(--red);}
+    .job-table tr.row-risk-med td:first-child{border-left:3px solid var(--amber);}
+    .col-no{width:7%}.col-name{width:23%}.col-status{width:12%}.col-pm{width:9%}.col-cost{width:8%}.col-billed{width:8%}.col-diff{width:8%}.col-sell{width:8%}.col-invoice{width:8%}.col-labour{width:5%}.col-margin{width:4%}
+    .pill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;display:inline-block;white-space:nowrap;}
+    .s-active{background:var(--green-light);color:var(--green-dark);}
+    .s-pending{background:var(--amber-light);color:var(--amber-dark);}
+    .s-complete{background:#EAF3DE;color:var(--green-text);}
+    .s-hold{background:var(--blue-light);color:var(--blue-dark);}
+    .s-other{background:var(--gray-50);color:var(--gray-600);border:0.5px solid var(--gray-100);}
+    .val-good{color:var(--green-text);font-weight:600;}
+    .val-warn{color:var(--amber-dark);font-weight:600;}
+    .val-danger{color:var(--red-dark);font-weight:600;}
+    .val-neutral{color:#2C2C2A;}
+    .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:1.25rem;}
+    .chart-card{background:#fff;border:0.5px solid var(--gray-100);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;}
+    .chart-title{font-size:13px;font-weight:600;color:#2C2C2A;margin-bottom:10px;}
+    .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:11px;color:var(--gray-600);}
+    .legend span{display:flex;align-items:center;gap:4px;}
+    .legend-sq{width:9px;height:9px;border-radius:2px;display:inline-block;}
+    .empty-state{text-align:center;padding:3rem;color:var(--gray-400);font-size:13px;}
+    @media(max-width:700px){main{padding:1rem}.chart-row{grid-template-columns:1fr}.risk-summary{grid-template-columns:1fr 1fr}header{padding:0 1rem}}
   </style>
 </head>
 <body>
-<div class="app">
+<header>
+  <div class="logo">
+    <div class="logo-icon"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
+    Sim<span>Pro</span> WIP Dashboard
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span id="loadedBadge" class="badge badge-empty">No data loaded</span>
+    <span style="font-size:11px;color:var(--gray-400);" id="lastUpdated"></span>
+  </div>
+</header>
 
-  <header>
-    <div class="logo">
-      <div class="logo-icon"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
-      Sim<span>Pro</span> Dashboard
+<main>
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" accept=".csv" id="csvInput" onchange="handleFile(this.files[0])" />
+    <div class="upload-icon"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i></div>
+    <div class="upload-title">Drop your SimPro WIP Report CSV here</div>
+    <div class="upload-sub">Or click to browse — export from SimPro: Reports → Job WIP Report</div>
+  </div>
+
+  <div class="settings-bar">
+    <div class="setting">
+      <label>Margin risk below</label>
+      <input type="number" id="marginThreshold" value="20" min="1" max="99" onchange="refresh()" />
+      <span style="font-size:11px;color:var(--gray-600);">%</span>
     </div>
-    <div class="header-right">
-      <span id="liveStatus" class="badge badge-demo">Demo mode</span>
-      <span style="font-size:11px;color:#888780;" id="lastUpdated"></span>
-      <button class="icon-btn" onclick="loadData()"><i class="ti ti-refresh" aria-hidden="true"></i> Refresh</button>
-      <button class="icon-btn" onclick="toggleConfig()"><i class="ti ti-settings" aria-hidden="true"></i> API Config</button>
+    <div class="setting">
+      <label>Project manager</label>
+      <select id="pmFilter" onchange="refresh()"><option value="all">All</option></select>
     </div>
-  </header>
-
-  <main>
-
-    <div class="config-panel" id="configPanel">
-      <div class="config-grid">
-        <div class="cfg-field">
-          <label>SimPro base URL</label>
-          <input type="text" id="apiBase" placeholder="https://yourcompany.simprosuite.com" />
-        </div>
-        <div class="cfg-field">
-          <label>Company ID</label>
-          <input type="text" id="companyId" placeholder="e.g. 1, 2, 3" />
-        </div>
-        <div class="cfg-field">
-          <label>API key</label>
-          <input type="password" id="apiKey" placeholder="Bearer token" />
-        </div>
-      </div>
-      <div class="config-row2">
-        <label>Margin risk threshold</label>
-        <input type="number" id="marginThreshold" value="20" min="1" max="99" />
-        <span style="font-size:12px;color:#5F5E5A;">%</span>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn-primary" onclick="connectAPI()"><i class="ti ti-plug" aria-hidden="true"></i> Connect</button>
-        <button class="btn-ghost" onclick="loadDemo()">Load demo data</button>
-      </div>
+    <div class="setting">
+      <label>Status group</label>
+      <select id="statusGroupFilter" onchange="refresh()">
+        <option value="all">All statuses</option>
+        <option value="active">Active / In progress</option>
+        <option value="pending">Pending / New</option>
+        <option value="complete">Completed</option>
+        <option value="hold">On hold</option>
+      </select>
     </div>
+    <div style="margin-left:auto;font-size:11px;color:var(--gray-400);" id="reportMeta"></div>
+  </div>
 
-    <div class="cors-notice" id="corsNotice">
-      <i class="ti ti-info-circle" aria-hidden="true"></i>
-      <strong>CORS note:</strong> Your SimPro instance needs to allow requests from this domain. If the connection fails with a network error, ask your SimPro administrator to whitelist <strong id="thisOrigin"></strong> in the API settings.
+  <div id="mainContent">
+    <div class="empty-state">
+      <i class="ti ti-file-upload" style="font-size:40px;display:block;margin-bottom:12px;color:#D3D1C7;"></i>
+      Upload a SimPro WIP Report CSV to get started
     </div>
+  </div>
+</main>
 
-    <div class="error-banner" id="errorBanner"></div>
-
-    <!-- Cost centre bar -->
-    <div class="cc-bar">
-      <span class="cc-bar-label"><i class="ti ti-building-factory-2" aria-hidden="true"></i> Cost centre</span>
-      <div class="cc-scroll" id="ccChips">
-        <span class="cc-loading"><span class="spinner"></span> Load data to see cost centres</span>
-      </div>
-    </div>
-
-    <div class="loading-state" id="loadingState"><span class="spinner"></span> Fetching jobs from SimPro…</div>
-
-    <div id="mainContent">
-      <div class="metrics" id="metricsRow"></div>
-
-      <div class="section-label">Risk summary</div>
-      <div class="risk-summary" id="riskSummary"></div>
-
-      <div class="filters">
-        <button class="filter-chip active" onclick="setFilter('all',this)">All</button>
-        <button class="filter-chip" onclick="setFilter('service',this)">Service</button>
-        <button class="filter-chip" onclick="setFilter('project',this)">Project</button>
-        <button class="filter-chip" onclick="setFilter('margin-risk',this)">⚠ Margin risk</button>
-        <button class="filter-chip" onclick="setFilter('labour-over',this)">Labour over</button>
-        <button class="filter-chip" onclick="setFilter('plant-under',this)">Plant under</button>
-        <button class="filter-chip" onclick="setFilter('overdue',this)">Overdue</button>
-        <div class="filter-right" id="jobCount"></div>
-      </div>
-
-      <div class="table-wrap">
-        <table class="job-table" role="table" aria-label="Jobs filtered by cost centre">
-          <thead>
-            <tr>
-              <th class="col-id">Job #</th>
-              <th class="col-name">Job name</th>
-              <th class="col-type">Type</th>
-              <th class="col-status">Status</th>
-              <th class="col-cc">Cost centre</th>
-              <th class="col-me">Est. margin</th>
-              <th class="col-ma">Act. margin</th>
-              <th class="col-lab">Labour</th>
-              <th class="col-pla">Plant</th>
-              <th class="col-prog">Prog.</th>
-              <th class="col-due">Due</th>
-            </tr>
-          </thead>
-          <tbody id="jobTableBody">
-            <tr><td colspan="11" class="empty-state">Configure API credentials or load demo data to get started.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="chart-row">
-        <div class="chart-card">
-          <div class="chart-title">Estimated vs actual margin</div>
-          <div class="legend">
-            <span><span class="legend-sq" style="background:#9FE1CB;"></span>Est.</span>
-            <span><span class="legend-sq" style="background:#1D9E75;"></span>On target</span>
-            <span><span class="legend-sq" style="background:#FAC775;"></span>At risk</span>
-            <span><span class="legend-sq" style="background:#F09595;"></span>Negative</span>
-          </div>
-          <div style="position:relative;height:220px;">
-            <canvas id="marginChart" role="img" aria-label="Bar chart comparing estimated and actual margins per job"></canvas>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-title">Labour &amp; plant vs estimate</div>
-          <div class="legend">
-            <span><span class="legend-sq" style="background:#378ADD;"></span>Labour</span>
-            <span><span class="legend-sq" style="background:#BA7517;"></span>Plant</span>
-            <span><span class="legend-sq" style="background:#E24B4A;"></span>Over</span>
-            <span><span class="legend-sq" style="background:#EF9F27;"></span>Under-used</span>
-          </div>
-          <div style="position:relative;height:220px;">
-            <canvas id="resourceChart" role="img" aria-label="Bar chart showing labour and plant as percentage of estimate per job"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </main>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-// ── State ──────────────────────────────────────────────
-let allJobs = [];
-let costCentres = [];
-let selectedCC = 'all';
-let activeFilter = 'all';
-let marginChart, resourceChart;
-let MARGIN_THRESHOLD = 20;
+let allJobs=[],reportMeta={},activeFilter='all',sortCol='diff',sortDir='asc',costChart,pmChart;
+let MARGIN_THRESHOLD=20;
 
-// ── Demo data ──────────────────────────────────────────
-const DEMO_JOBS = [
-  { id:'SV-1042', name:'HVAC service – Countdown NP',       type:'service', status:'active',   costCentre:'Mechanical', sell:3200,   actual:2100,  estMargin:28, actMargin:34,  labourEst:800,  labourAct:920,  plantEst:400,  plantAct:210,  progress:68,  scheduledEnd:'2026-05-16' },
-  { id:'SV-1043', name:'Electrical fault – Port Taranaki',  type:'service', status:'complete', costCentre:'Electrical', sell:1800,   actual:1650,  estMargin:22, actMargin:8,   labourEst:600,  labourAct:810,  plantEst:200,  plantAct:95,   progress:100, scheduledEnd:'2026-04-25' },
-  { id:'SV-1044', name:'Plumbing repair – New World',       type:'service', status:'pending',  costCentre:'Civil',      sell:950,    actual:0,     estMargin:25, actMargin:null, labourEst:300,  labourAct:0,    plantEst:80,   plantAct:0,    progress:0,   scheduledEnd:'2026-05-19' },
-  { id:'SV-1045', name:'Generator maintenance – Hospital',  type:'service', status:'overdue',  costCentre:'Electrical', sell:4500,   actual:3900,  estMargin:30, actMargin:13,  labourEst:1200, labourAct:1850, plantEst:600,  plantAct:280,  progress:55,  scheduledEnd:'2026-05-10' },
-  { id:'PJ-0211', name:'Substation upgrade – Bell Block',   type:'project', status:'active',   costCentre:'Electrical', sell:128000, actual:74200, estMargin:32, actMargin:29,  labourEst:38000,labourAct:32000,plantEst:18000,plantAct:9400, progress:62,  scheduledEnd:'2026-06-30' },
-  { id:'PJ-0212', name:'Commercial fit-out – TSB Hub',      type:'project', status:'active',   costCentre:'Mechanical', sell:87500,  actual:52000, estMargin:24, actMargin:17,  labourEst:24000,labourAct:28500,plantEst:8000, plantAct:3200, progress:44,  scheduledEnd:'2026-07-15' },
-  { id:'PJ-0213', name:'Solar installation – Stratford',    type:'project', status:'overdue',  costCentre:'Electrical', sell:64000,  actual:71200, estMargin:26, actMargin:-11, labourEst:18000,labourAct:27000,plantEst:7000, plantAct:4100, progress:88,  scheduledEnd:'2026-04-30' },
-  { id:'PJ-0214', name:'Pump station – Inglewood',          type:'project', status:'complete', costCentre:'Civil',      sell:42000,  actual:39800, estMargin:20, actMargin:22,  labourEst:12000,labourAct:11200,plantEst:5500, plantAct:6100, progress:100, scheduledEnd:'2026-04-20' },
-  { id:'PJ-0215', name:'Irrigation network – Ōpunakē',     type:'project', status:'pending',  costCentre:'Civil',      sell:95000,  actual:0,     estMargin:29, actMargin:null, labourEst:28000,labourAct:0,    plantEst:12000,plantAct:0,    progress:0,   scheduledEnd:'2026-09-30' },
-  { id:'PJ-0216', name:'Rooftop HVAC – Mitre 10 Mega',     type:'project', status:'active',   costCentre:'Mechanical', sell:55000,  actual:38000, estMargin:27, actMargin:19,  labourEst:16000,labourAct:19200,plantEst:6000, plantAct:2800, progress:58,  scheduledEnd:'2026-06-15' },
-];
+function statusGroup(s){
+  if(!s)return'other';
+  const sl=s.toLowerCase();
+  if(sl.includes('in progress')||sl.includes('scheduled')||sl.includes('dg ready')||sl.includes('bci')||sl.includes('design & estimation')||sl.includes('handover')||sl.includes('approved')||sl.includes('dacc')||sl.includes('drev')||sl.includes('rti')||sl.includes('ready to schedule')||sl.includes('ready for approval')||sl.includes('steps required')||sl.includes('follow up'))return'active';
+  if(sl.includes('new')||sl.includes('to be priced'))return'pending';
+  if(sl.includes('completed')||sl.includes('archived'))return'complete';
+  if(sl.includes('hold')||sl.includes('rejected'))return'hold';
+  return'other';
+}
+function statusClass(s){const g=statusGroup(s);if(g==='active')return's-active';if(g==='pending')return's-pending';if(g==='complete')return's-complete';if(g==='hold')return's-hold';return's-other';}
+function parseMoney(v){if(!v||v==='')return 0;return parseFloat(String(v).replace(/[$,\s]/g,''))||0;}
+function fmt(v){if(v===0)return'$0';const abs=Math.abs(v);const str=abs>=1000?'$'+Math.round(abs).toLocaleString():'$'+abs.toFixed(2).replace(/\.00$/,'');return v<0?'-'+str:str;}
+function fmtK(v){if(Math.abs(v)>=1000)return(v<0?'-':'')+'$'+Math.round(Math.abs(v)/1000)+'k';return fmt(v);}
 
-// ── Helpers ────────────────────────────────────────────
-const fmt = v => '$' + Math.round(v).toLocaleString();
-const fmtDateShort = d => { if(!d) return '—'; const p=d.split('-'); return p[2]+'/'+p[1]; };
-const marginClass = v => { if(v===null||v===undefined) return ''; if(v<0) return 'margin-danger'; if(v<MARGIN_THRESHOLD) return 'margin-warn'; return 'margin-good'; };
-const marginRisk = j => j.actMargin !== null && j.actMargin < MARGIN_THRESHOLD;
-const labourOver = j => j.labourEst > 0 && j.labourAct > j.labourEst;
-const plantUnder = j => j.plantEst > 0 && j.plantAct < j.plantEst * 0.6 && j.progress > 30;
-const rowRisk = j => { if(j.actMargin!==null && j.actMargin<0) return 'row-risk-high'; if(marginRisk(j)||labourOver(j)) return 'row-risk-med'; return ''; };
+const uploadZone=document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('drag-over');});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('drag-over');handleFile(e.dataTransfer.files[0]);});
 
-function indBar(est, act, label) {
-  if (!est) return '<span style="font-size:10px;color:#888780;">—</span>';
-  const rawPct = act > 0 ? Math.round((act/est)*100) : 0;
-  const pct = Math.min(rawPct, 100);
-  const over = act > est, under = act < est*0.6 && act > 0;
-  const fill = over ? '#E24B4A' : under ? '#EF9F27' : '#1D9E75';
-  const cls = over ? 'over' : under ? 'under' : 'ok';
-  const txt = act === 0 ? 'Not started' : rawPct + '%';
-  return `<div class="ind-label"><span>${label}</span><span class="${cls}">${txt}</span></div><div class="ind-bar"><div class="ind-fill" style="background:${fill};width:${pct}%;"></div></div>`;
+function handleFile(file){
+  if(!file||!file.name.endsWith('.csv')){alert('Please upload a CSV file.');return;}
+  const reader=new FileReader();
+  reader.onload=e=>parseCSV(e.target.result,file.name);
+  reader.readAsText(file);
 }
 
-// ── UI ─────────────────────────────────────────────────
-function toggleConfig() { document.getElementById('configPanel').classList.toggle('open'); }
-function showError(msg) { const el=document.getElementById('errorBanner'); el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',7000); }
-
-function buildCCChips() {
-  const ccs = ['all', ...costCentres];
-  document.getElementById('ccChips').innerHTML = ccs.map(cc =>
-    `<button class="cc-chip${cc===selectedCC?' selected':''}${cc==='all'?' all':''}" onclick="selectCC('${cc}')">
-      ${cc==='all' ? '<i class="ti ti-layout-grid" aria-hidden="true"></i> All cost centres' : cc}
-    </button>`
-  ).join('');
+function parseCSV(text,filename){
+  const lines=text.split('\n');
+  const metaLine=lines[0]||'';
+  reportMeta={filename};
+  const ccMatch=metaLine.match(/Cost Centre:\s*([^|]+)/);if(ccMatch)reportMeta.costCentre=ccMatch[1].trim();
+  const dateMatch=metaLine.match(/Date \(Past & Including\):\s*([^|]+)/);if(dateMatch)reportMeta.date=dateMatch[1].trim();
+  const compMatch=metaLine.match(/Company:\s*([^|]+)/);if(compMatch)reportMeta.company=compMatch[1].trim();
+  let headerIdx=-1;
+  for(let i=0;i<lines.length;i++){if(lines[i].includes('Job No')){headerIdx=i;break;}}
+  if(headerIdx===-1){alert('Could not find job data. Make sure this is a SimPro Job WIP Report CSV.');return;}
+  const csvBody=lines.slice(headerIdx).join('\n');
+  Papa.parse(csvBody,{header:true,skipEmptyLines:true,complete:results=>{
+    allJobs=results.data
+      .filter(r=>r['Job No']&&String(r['Job No']).trim()!=='')
+      .map(r=>({
+        no:String(r['Job No']).trim(),
+        name:(r['Job Name']||'').trim(),
+        status:(r['Status']||'').trim(),
+        created:(r['Created Date']||'').trim(),
+        customer:(r['Customer']||'').trim(),
+        site:(r['Site']||'').trim(),
+        pm:(r['Project Manager']||'').trim(),
+        labourHrs:parseFloat(r['Labour Hours'])||0,
+        resourceCost:parseMoney(r['Resource Cost']),
+        materialCost:parseMoney(r['Material Costs']),
+        directCost:parseMoney(r['Direct Cost']),
+        overhead:parseMoney(r['Overhead']),
+        totalCost:parseMoney(r['Total Cost']),
+        totalBilled:parseMoney(r['Total BilledEx Tax']),
+        totalCredit:parseMoney(r['Total CreditEx Tax']),
+        difference:parseMoney(r['Difference']),
+        sellValue:parseMoney(r['Cost Centre TotalEx Tax']),
+        toInvoice:parseMoney(r['Amount to InvoiceEx Tax']),
+        lastBilled:(r['Last Billed Date']||'').trim(),
+        group:statusGroup((r['Status']||'').trim()),
+      }));
+    onDataLoaded(filename);
+  }});
 }
 
-function selectCC(cc) {
-  selectedCC = cc;
-  buildCCChips();
-  updateMetrics();
+function onDataLoaded(filename){
+  const zone=document.getElementById('uploadZone');
+  zone.classList.add('upload-loaded');
+  zone.querySelector('.upload-icon i').className='ti ti-circle-check';
+  zone.querySelector('.upload-title').textContent=filename;
+  zone.querySelector('.upload-sub').textContent=allJobs.length+' jobs loaded — drop a new file to refresh';
+  document.getElementById('loadedBadge').className='badge badge-loaded';
+  document.getElementById('loadedBadge').textContent=reportMeta.costCentre||'Loaded';
+  document.getElementById('lastUpdated').textContent='as at '+(reportMeta.date||'unknown date');
+  document.getElementById('reportMeta').innerHTML=(reportMeta.company?'<strong>'+reportMeta.company+'</strong> · ':'')+( reportMeta.costCentre?reportMeta.costCentre+' · ':'')+allJobs.length+' jobs';
+  const pms=[...new Set(allJobs.map(j=>j.pm).filter(Boolean))].sort();
+  const pmSel=document.getElementById('pmFilter');
+  pmSel.innerHTML='<option value="all">All</option>'+pms.map(p=>`<option value="${p}">${p}</option>`).join('');
+  activeFilter='all';
+  MARGIN_THRESHOLD=parseInt(document.getElementById('marginThreshold').value)||20;
+  refresh();
+}
+
+function getFiltered(){
+  MARGIN_THRESHOLD=parseInt(document.getElementById('marginThreshold').value)||20;
+  const pm=document.getElementById('pmFilter').value;
+  const sg=document.getElementById('statusGroupFilter').value;
+  let jobs=allJobs;
+  if(pm!=='all')jobs=jobs.filter(j=>j.pm===pm);
+  if(sg!=='all')jobs=jobs.filter(j=>j.group===sg);
+  if(activeFilter==='cost-overrun')jobs=jobs.filter(j=>j.totalCost>j.sellValue&&j.sellValue>0);
+  else if(activeFilter==='uninvoiced')jobs=jobs.filter(j=>j.toInvoice>0);
+  else if(activeFilter==='active')jobs=jobs.filter(j=>j.group==='active');
+  else if(activeFilter==='complete')jobs=jobs.filter(j=>j.group==='complete');
+  return [...jobs].sort((a,b)=>{
+    let av,bv;
+    if(sortCol==='diff'){av=a.difference;bv=b.difference;}
+    else if(sortCol==='cost'){av=a.totalCost;bv=b.totalCost;}
+    else if(sortCol==='sell'){av=a.sellValue;bv=b.sellValue;}
+    else if(sortCol==='invoice'){av=a.toInvoice;bv=b.toInvoice;}
+    else if(sortCol==='labour'){av=a.labourHrs;bv=b.labourHrs;}
+    else if(sortCol==='no'){av=parseInt(a.no);bv=parseInt(b.no);}
+    else{av=(a[sortCol]||'').toString();bv=(b[sortCol]||'').toString();return sortDir==='asc'?av.localeCompare(bv):bv.localeCompare(av);}
+    return sortDir==='asc'?av-bv:bv-av;
+  });
+}
+
+function setFilter(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active','active-warn','active-red'));
+  if(f==='cost-overrun')btn.classList.add('active-red');
+  else if(f==='uninvoiced')btn.classList.add('active-warn');
+  else btn.classList.add('active');
+  renderTable();
+}
+
+function setSort(col){
+  if(sortCol===col)sortDir=sortDir==='asc'?'desc':'asc';
+  else{sortCol=col;sortDir='asc';}
+  renderTable();
+}
+
+function calcMargin(j){if(!j.sellValue||j.sellValue===0)return null;return Math.round(((j.sellValue-j.totalCost)/j.sellValue)*100);}
+function marginClass(m){if(m===null)return'val-neutral';if(m<0)return'val-danger';if(m<MARGIN_THRESHOLD)return'val-warn';return'val-good';}
+
+function refresh(){
+  MARGIN_THRESHOLD=parseInt(document.getElementById('marginThreshold').value)||20;
+  if(!allJobs.length)return;
+  renderMetrics();
+  renderRiskCards();
   renderTable();
   renderCharts();
 }
 
-function getByCC() {
-  return selectedCC === 'all' ? allJobs : allJobs.filter(j => j.costCentre === selectedCC);
+function renderMetrics(){
+  const jobs=allJobs;
+  const totalSell=jobs.reduce((s,j)=>s+j.sellValue,0);
+  const totalCost=jobs.reduce((s,j)=>s+j.totalCost,0);
+  const totalBilled=jobs.reduce((s,j)=>s+j.totalBilled,0);
+  const totalInvoice=jobs.reduce((s,j)=>s+j.toInvoice,0);
+  const totalLabour=jobs.reduce((s,j)=>s+j.labourHrs,0);
+  const overrun=jobs.filter(j=>j.totalCost>j.sellValue&&j.sellValue>0).length;
+  const avgMargin=totalSell>0?Math.round(((totalSell-totalCost)/totalSell)*100):null;
+  let el=document.getElementById('metricsRow');
+  if(!el){el=document.createElement('div');el.id='metricsRow';el.className='metrics';document.getElementById('mainContent').innerHTML='';document.getElementById('mainContent').appendChild(el);}
+  el.innerHTML=`
+    <div class="metric"><div class="metric-label">Total jobs</div><div class="metric-value">${jobs.length}</div><div class="metric-sub">${jobs.filter(j=>j.group==='active').length} active</div></div>
+    <div class="metric"><div class="metric-label">Sell value</div><div class="metric-value" style="font-size:15px;">${fmt(totalSell)}</div><div class="metric-sub">ex tax</div></div>
+    <div class="metric"><div class="metric-label">Total cost</div><div class="metric-value" style="font-size:15px;">${fmt(totalCost)}</div><div class="metric-sub">direct + overhead</div></div>
+    <div class="metric"><div class="metric-label">Total billed</div><div class="metric-value" style="font-size:15px;">${fmt(totalBilled)}</div><div class="metric-sub">invoiced to date</div></div>
+    <div class="metric ${totalInvoice>0?'warn':'good'}"><div class="metric-label">To invoice</div><div class="metric-value" style="font-size:15px;color:${totalInvoice>0?'#854F0B':'#3B6D11'}">${fmt(totalInvoice)}</div><div class="metric-sub">outstanding</div></div>
+    <div class="metric ${avgMargin!==null&&avgMargin<MARGIN_THRESHOLD?'danger':''}"><div class="metric-label">Avg margin</div><div class="metric-value ${marginClass(avgMargin)}">${avgMargin!==null?avgMargin+'%':'—'}</div><div class="metric-sub">sell vs cost</div></div>
+    <div class="metric"><div class="metric-label">Labour hours</div><div class="metric-value">${Math.round(totalLabour).toLocaleString()}</div><div class="metric-sub">total logged</div></div>
+    <div class="metric ${overrun>0?'danger':'good'}"><div class="metric-label">Cost overruns</div><div class="metric-value" style="color:${overrun>0?'#A32D2D':'#3B6D11'}">${overrun}</div><div class="metric-sub">cost &gt; sell value</div></div>`;
 }
 
-function getFiltered() {
-  let jobs = getByCC();
-  if(activeFilter==='service')      return jobs.filter(j=>j.type==='service');
-  if(activeFilter==='project')      return jobs.filter(j=>j.type==='project');
-  if(activeFilter==='margin-risk')  return jobs.filter(marginRisk);
-  if(activeFilter==='labour-over')  return jobs.filter(labourOver);
-  if(activeFilter==='plant-under')  return jobs.filter(plantUnder);
-  if(activeFilter==='overdue')      return jobs.filter(j=>j.status==='overdue');
-  return jobs;
+function renderRiskCards(){
+  const jobs=allJobs;
+  const overrun=jobs.filter(j=>j.totalCost>j.sellValue&&j.sellValue>0).length;
+  const atRisk=jobs.filter(j=>{const m=calcMargin(j);return m!==null&&m>=0&&m<MARGIN_THRESHOLD;}).length;
+  const healthy=jobs.filter(j=>{const m=calcMargin(j);return m!==null&&m>=MARGIN_THRESHOLD;}).length;
+  const uninvoiced=jobs.filter(j=>j.toInvoice>500).length;
+  let sl=document.getElementById('riskLabel');
+  let el=document.getElementById('riskRow');
+  if(!sl){sl=document.createElement('div');sl.id='riskLabel';sl.className='section-label';sl.textContent='Financial risk summary';document.getElementById('metricsRow').after(sl);}
+  if(!el){el=document.createElement('div');el.id='riskRow';el.className='risk-summary';sl.after(el);}
+  el.innerHTML=`
+    <div class="risk-card red"><div class="risk-card-num">${overrun}</div><div class="risk-card-label"><i class="ti ti-alert-triangle"></i> Cost exceeds sell value</div></div>
+    <div class="risk-card amber"><div class="risk-card-num">${atRisk}</div><div class="risk-card-label"><i class="ti ti-alert-circle"></i> Margin below ${MARGIN_THRESHOLD}%</div></div>
+    <div class="risk-card green"><div class="risk-card-num">${healthy}</div><div class="risk-card-label"><i class="ti ti-circle-check"></i> Healthy margin</div></div>
+    <div class="risk-card blue"><div class="risk-card-num">${uninvoiced}</div><div class="risk-card-label"><i class="ti ti-receipt"></i> Uninvoiced &gt;$500</div></div>`;
 }
 
-function setFilter(f, btn) {
-  activeFilter = f;
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active','active-warn'));
-  btn.classList.add(f==='margin-risk' ? 'active-warn' : 'active');
-  renderTable();
-}
-
-// ── Metrics & risk ─────────────────────────────────────
-function updateMetrics() {
-  const jobs = getByCC();
-  const atRisk = jobs.filter(marginRisk).length;
-  const labOver = jobs.filter(labourOver).length;
-  const pUnder = jobs.filter(plantUnder).length;
-  const avgEst = jobs.length ? Math.round(jobs.reduce((s,j)=>s+(j.estMargin||0),0)/jobs.length) : 0;
-  const live = jobs.filter(j=>j.actMargin!==null&&j.actMargin!==undefined);
-  const avgAct = live.length ? Math.round(live.reduce((s,j)=>s+j.actMargin,0)/live.length) : null;
-  const totalSell = jobs.reduce((s,j)=>s+j.sell,0);
-  const ccLabel = selectedCC !== 'all' ? ' — ' + selectedCC : '';
-
-  document.getElementById('metricsRow').innerHTML = `
-    <div class="metric"><div class="metric-label">Jobs${ccLabel}</div><div class="metric-value">${jobs.length}</div><div class="metric-sub">${jobs.filter(j=>j.status==='active').length} active</div></div>
-    <div class="metric"><div class="metric-label">Sell value</div><div class="metric-value" style="font-size:16px;">${fmt(totalSell)}</div><div class="metric-sub">combined</div></div>
-    <div class="metric"><div class="metric-label">Avg est. margin</div><div class="metric-value">${avgEst}%</div><div class="metric-sub">at quote</div></div>
-    <div class="metric ${avgAct!==null&&avgAct<MARGIN_THRESHOLD?'danger':''}"><div class="metric-label">Avg act. margin</div><div class="metric-value ${marginClass(avgAct)}">${avgAct!==null?avgAct+'%':'—'}</div><div class="metric-sub">live</div></div>
-    <div class="metric ${atRisk>0?'warn':''}"><div class="metric-label">Margin at risk</div><div class="metric-value" style="color:${atRisk>0?'#A32D2D':'#3B6D11'}">${atRisk}</div><div class="metric-sub">below ${MARGIN_THRESHOLD}%</div></div>
-    <div class="metric ${labOver>0?'warn':''}"><div class="metric-label">Labour over</div><div class="metric-value" style="color:${labOver>0?'#A32D2D':'#3B6D11'}">${labOver}</div><div class="metric-sub">jobs</div></div>
-    <div class="metric ${pUnder>0?'warn':''}"><div class="metric-label">Plant under-used</div><div class="metric-value" style="color:${pUnder>0?'#854F0B':'#3B6D11'}">${pUnder}</div><div class="metric-sub">60%+ unused</div></div>
-  `;
-
-  const neg  = jobs.filter(j=>j.actMargin!==null&&j.actMargin<0).length;
-  const warn = jobs.filter(j=>j.actMargin!==null&&j.actMargin>=0&&j.actMargin<MARGIN_THRESHOLD).length;
-  const good = jobs.filter(j=>j.actMargin!==null&&j.actMargin>=MARGIN_THRESHOLD).length;
-  document.getElementById('riskSummary').innerHTML = `
-    <div class="risk-card red"><div class="risk-card-num">${neg}</div><div class="risk-card-label"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Negative margin — losing money</div></div>
-    <div class="risk-card amber"><div class="risk-card-num">${warn}</div><div class="risk-card-label"><i class="ti ti-alert-circle" aria-hidden="true"></i> Below ${MARGIN_THRESHOLD}% threshold</div></div>
-    <div class="risk-card green"><div class="risk-card-num">${good}</div><div class="risk-card-label"><i class="ti ti-circle-check" aria-hidden="true"></i> On or above target</div></div>
-  `;
-}
-
-// ── Table ──────────────────────────────────────────────
-function renderTable() {
-  const jobs = getFiltered();
-  document.getElementById('jobCount').textContent = jobs.length + ' job' + (jobs.length!==1?'s':'');
-  const tbody = document.getElementById('jobTableBody');
-  if (!jobs.length) { tbody.innerHTML='<tr><td colspan="11" class="empty-state">No jobs match this filter.</td></tr>'; return; }
-  tbody.innerHTML = jobs.map(j => {
-    const rc = rowRisk(j);
-    const pClass = j.progress>66?'':j.progress>33?'warn':'danger';
-    return `<tr class="${rc}">
-      <td style="font-family:monospace;font-size:11px;color:#5F5E5A;">${j.id}</td>
+function renderTable(){
+  if(!allJobs.length)return;
+  const jobs=getFiltered();
+  let el=document.getElementById('tableSection');
+  if(!el){el=document.createElement('div');el.id='tableSection';document.getElementById('riskRow').after(el);}
+  const arrow=col=>sortCol===col?(sortDir==='asc'?' ↑':' ↓'):'';
+  el.innerHTML=`
+    <div class="filters">
+      <button class="filter-chip ${activeFilter==='all'?'active':''}" onclick="setFilter('all',this)">All jobs</button>
+      <button class="filter-chip ${activeFilter==='active'?'active':''}" onclick="setFilter('active',this)">Active</button>
+      <button class="filter-chip ${activeFilter==='complete'?'active':''}" onclick="setFilter('complete',this)">Completed</button>
+      <button class="filter-chip ${activeFilter==='cost-overrun'?'active-red':''}" onclick="setFilter('cost-overrun',this)">⚠ Cost overrun</button>
+      <button class="filter-chip ${activeFilter==='uninvoiced'?'active-warn':''}" onclick="setFilter('uninvoiced',this)">Uninvoiced</button>
+      <div class="filter-right">${jobs.length} job${jobs.length!==1?'s':''} shown</div>
+    </div>
+    <div class="table-wrap">
+      <table class="job-table" role="table">
+        <thead><tr>
+          <th class="col-no" onclick="setSort('no')">Job #${arrow('no')}</th>
+          <th class="col-name" onclick="setSort('name')">Job name${arrow('name')}</th>
+          <th class="col-status" onclick="setSort('status')">Status${arrow('status')}</th>
+          <th class="col-pm" onclick="setSort('pm')">PM${arrow('pm')}</th>
+          <th class="col-cost" onclick="setSort('cost')">Total cost${arrow('cost')}</th>
+          <th class="col-billed" onclick="setSort('billed')">Billed${arrow('billed')}</th>
+          <th class="col-diff" onclick="setSort('diff')">Difference${arrow('diff')}</th>
+          <th class="col-sell" onclick="setSort('sell')">Sell value${arrow('sell')}</th>
+          <th class="col-invoice" onclick="setSort('invoice')">To invoice${arrow('invoice')}</th>
+          <th class="col-labour" onclick="setSort('labour')">Hrs${arrow('labour')}</th>
+          <th class="col-margin">Margin</th>
+        </tr></thead>
+        <tbody id="jobTableBody"></tbody>
+      </table>
+    </div>`;
+  const tbody=document.getElementById('jobTableBody');
+  if(!jobs.length){tbody.innerHTML='<tr><td colspan="11" class="empty-state">No jobs match this filter.</td></tr>';return;}
+  tbody.innerHTML=jobs.map(j=>{
+    const m=calcMargin(j);
+    const mc=marginClass(m);
+    const diffClass=j.difference>=0?'val-good':j.difference<-1000?'val-danger':'val-warn';
+    const rc=j.totalCost>j.sellValue&&j.sellValue>0?'row-risk-high':(m!==null&&m<MARGIN_THRESHOLD?'row-risk-med':'');
+    const invoiceClass=j.toInvoice>0?'val-warn':'val-neutral';
+    const shortStatus=j.status.replace(/^(Job:|Private Job:|Defect:)\s*/i,'').trim();
+    return`<tr class="${rc}">
+      <td style="font-family:monospace;font-size:11px;color:var(--gray-600);">${j.no}</td>
       <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${j.name}">${j.name}</td>
-      <td><span class="pill type-${j.type}">${j.type==='service'?'SVC':'PROJ'}</span></td>
-      <td><span class="pill status-${j.status}">${j.status.charAt(0).toUpperCase()+j.status.slice(1)}</span></td>
-      <td style="font-size:11px;color:#5F5E5A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${j.costCentre||'—'}">${j.costCentre||'—'}</td>
-      <td class="${marginClass(j.estMargin)}">${j.estMargin!==null?j.estMargin+'%':'—'}</td>
-      <td class="${marginClass(j.actMargin)}">${j.actMargin!==null?j.actMargin+'%':'—'}</td>
-      <td>${indBar(j.labourEst,j.labourAct,'Labour')}</td>
-      <td>${indBar(j.plantEst,j.plantAct,'Plant')}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:4px;">
-          <div class="progress-bar" style="flex:1;"><div class="progress-fill ${pClass}" style="width:${j.progress}%;"></div></div>
-          <span style="font-size:10px;color:#888780;min-width:26px;text-align:right;">${j.progress}%</span>
-        </div>
-      </td>
-      <td style="font-size:11px;color:#888780;">${fmtDateShort(j.scheduledEnd)}</td>
+      <td><span class="pill ${statusClass(j.status)}" title="${j.status}">${shortStatus.slice(0,24)}</span></td>
+      <td style="font-size:11px;color:var(--gray-600);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${j.pm}">${j.pm||'—'}</td>
+      <td class="val-neutral">${fmtK(j.totalCost)}</td>
+      <td class="val-neutral">${fmtK(j.totalBilled)}</td>
+      <td class="${diffClass}">${fmtK(j.difference)}</td>
+      <td class="val-neutral">${fmtK(j.sellValue)}</td>
+      <td class="${invoiceClass}">${fmtK(j.toInvoice)}</td>
+      <td style="font-size:11px;color:var(--gray-600);">${j.labourHrs.toFixed(1)}</td>
+      <td class="${mc}">${m!==null?m+'%':'—'}</td>
     </tr>`;
   }).join('');
 }
 
-// ── Charts ─────────────────────────────────────────────
-function renderCharts() {
-  const jobs = getByCC().filter(j=>j.actMargin!==null).slice(0,7);
-  if (marginChart) marginChart.destroy();
-  if (jobs.length) {
-    marginChart = new Chart(document.getElementById('marginChart'), {
-      type: 'bar',
-      data: {
-        labels: jobs.map(j=>j.id),
-        datasets: [
-          { label:'Est.', data:jobs.map(j=>j.estMargin), backgroundColor:'#9FE1CB', borderRadius:3 },
-          { label:'Actual', data:jobs.map(j=>j.actMargin), backgroundColor:jobs.map(j=>j.actMargin<0?'#F09595':j.actMargin<MARGIN_THRESHOLD?'#FAC775':'#1D9E75'), borderRadius:3 }
-        ]
-      },
-      options: {
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:false } },
-        scales:{
-          x:{ ticks:{ font:{size:10}, color:'#888780', autoSkip:false, maxRotation:0 }, grid:{ display:false } },
-          y:{ ticks:{ font:{size:10}, color:'#888780', callback:v=>v+'%' }, grid:{ color:'rgba(0,0,0,0.05)' },
-              min: Math.min(-15, Math.min(...jobs.map(j=>j.actMargin))-5) }
-        }
-      }
-    });
-  }
+function renderCharts(){
+  let el=document.getElementById('chartSection');
+  if(!el){el=document.createElement('div');el.id='chartSection';el.className='chart-row';document.getElementById('tableSection').after(el);}
+  el.innerHTML=`
+    <div class="chart-card">
+      <div class="chart-title">Top jobs — cost vs sell value</div>
+      <div class="legend">
+        <span><span class="legend-sq" style="background:#9FE1CB;"></span>Sell value</span>
+        <span><span class="legend-sq" style="background:#1D9E75;"></span>Cost (ok)</span>
+        <span><span class="legend-sq" style="background:#E24B4A;"></span>Cost (overrun)</span>
+      </div>
+      <div style="position:relative;height:220px;"><canvas id="costChart" role="img" aria-label="Top jobs cost vs sell value"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Invoicing by project manager</div>
+      <div class="legend">
+        <span><span class="legend-sq" style="background:#9FE1CB;"></span>Already billed</span>
+        <span><span class="legend-sq" style="background:#378ADD;"></span>To invoice</span>
+      </div>
+      <div style="position:relative;height:220px;"><canvas id="pmChart" role="img" aria-label="Invoicing by project manager"></canvas></div>
+    </div>`;
 
-  const resJobs = getByCC().filter(j=>j.labourEst>0||j.plantEst>0).slice(0,7);
-  if (resourceChart) resourceChart.destroy();
-  if (resJobs.length) {
-    resourceChart = new Chart(document.getElementById('resourceChart'), {
-      type: 'bar',
-      data: {
-        labels: resJobs.map(j=>j.id),
-        datasets: [
-          { label:'Labour %', data:resJobs.map(j=>j.labourEst>0?Math.round((j.labourAct/j.labourEst)*100):0), backgroundColor:resJobs.map(j=>j.labourAct>j.labourEst?'#E24B4A':'#378ADD'), borderRadius:3 },
-          { label:'Plant %',  data:resJobs.map(j=>j.plantEst>0?Math.round((j.plantAct/j.plantEst)*100):0),  backgroundColor:resJobs.map(j=>j.plantAct<j.plantEst*0.6&&j.plantAct>0?'#EF9F27':'#BA7517'), borderRadius:3 }
-        ]
-      },
-      options: {
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:false } },
-        scales:{
-          x:{ ticks:{ font:{size:10}, color:'#888780', autoSkip:false, maxRotation:0 }, grid:{ display:false } },
-          y:{ ticks:{ font:{size:10}, color:'#888780', callback:v=>v+'%' }, grid:{ color:'rgba(0,0,0,0.05)' }, min:0, max:160 }
-        }
-      }
-    });
-  }
-}
+  const topJobs=[...allJobs].sort((a,b)=>b.sellValue-a.sellValue).slice(0,8);
+  if(costChart)costChart.destroy();
+  costChart=new Chart(document.getElementById('costChart'),{type:'bar',data:{labels:topJobs.map(j=>j.no),datasets:[{label:'Sell',data:topJobs.map(j=>j.sellValue),backgroundColor:'#9FE1CB',borderRadius:3},{label:'Cost',data:topJobs.map(j=>j.totalCost),backgroundColor:topJobs.map(j=>j.totalCost>j.sellValue?'#E24B4A':'#1D9E75'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},color:'#888780',autoSkip:false,maxRotation:0},grid:{display:false}},y:{ticks:{font:{size:10},color:'#888780',callback:v=>fmtK(v)},grid:{color:'rgba(0,0,0,0.05)'}}}}});
 
-// ── Load demo ──────────────────────────────────────────
-function loadDemo() {
-  allJobs = DEMO_JOBS;
-  costCentres = [...new Set(DEMO_JOBS.map(j=>j.costCentre).filter(Boolean))].sort();
-  document.getElementById('liveStatus').className = 'badge badge-demo';
-  document.getElementById('liveStatus').textContent = 'Demo mode';
-  document.getElementById('lastUpdated').textContent = 'Demo data';
-  document.getElementById('configPanel').classList.remove('open');
-  selectedCC = 'all';
-  buildCCChips();
-  updateMetrics(); renderTable(); renderCharts();
-}
-
-// ── Connect API ────────────────────────────────────────
-async function connectAPI() {
-  const base  = document.getElementById('apiBase').value.trim().replace(/\/+$/,'');
-  const key   = document.getElementById('apiKey').value.trim();
-  const companyId = document.getElementById('companyId').value.trim() || '0';
-  MARGIN_THRESHOLD = parseInt(document.getElementById('marginThreshold').value) || 20;
-  if (!base || !key) { showError('Please enter both the base URL and API key.'); return; }
-  // Show CORS notice when connecting from external domain
-  const notice = document.getElementById('corsNotice');
-  document.getElementById('thisOrigin').textContent = location.origin;
-  notice.style.display = 'block';
-  await loadData(base, key, companyId);
-}
-
-async function loadData(base, key, companyId) {
-  base = base || localStorage.getItem('simpro_base');
-  key  = key  || localStorage.getItem('simpro_key');
-  companyId = companyId || localStorage.getItem('simpro_company') || '0';
-  if (!base || !key) { loadDemo(); return; }
-
-  document.getElementById('loadingState').style.display = 'block';
-  document.getElementById('ccChips').innerHTML = '<span class="cc-loading"><span class="spinner"></span> Loading cost centres…</span>';
-
-  try {
-    const headers = { 'x-simpro-base': base, 'x-api-key': key.startsWith('Bearer ') ? key : 'Bearer '+key, 'Content-Type':'application/json' };
-
-    const [ccRes, svcRes, projRes] = await Promise.all([
-      fetch(`/api-proxy/api/v1.0/companies/${companyId}/costCentres/?pageSize=250`, { headers }),
-      fetch(`/api-proxy/api/v1.0/companies/${companyId}/jobs/?pageSize=250&jobType=Service`, { headers }),
-      fetch(`/api-proxy/api/v1.0/companies/${companyId}/jobs/?pageSize=250&jobType=Project`, { headers })
-    ]);
-
-    if (ccRes.ok) {
-      const ccData = await ccRes.json();
-      costCentres = [...new Set((Array.isArray(ccData)?ccData:ccData.Result||[]).map(c=>c.Name||c.name).filter(Boolean))].sort();
-    }
-
-    if (!svcRes.ok && !projRes.ok) throw new Error('API returned ' + svcRes.status + '. Check your URL and API key.');
-
-    const svcData  = svcRes.ok  ? await svcRes.json()  : [];
-    const projData = projRes.ok ? await projRes.json() : [];
-
-    const mapStatus = s => {
-      if (!s) return 'pending';
-      const sl = s.toLowerCase();
-      if (sl.includes('complet')||sl.includes('invoic')) return 'complete';
-      if (sl.includes('progress')||sl.includes('active')||sl.includes('open')) return 'active';
-      if (sl.includes('overdue')||sl.includes('late')) return 'overdue';
-      return 'pending';
-    };
-    const calcMargin = (sell,cost) => (!sell||sell===0) ? null : Math.round(((sell-cost)/sell)*100);
-    const mapJob = (raw, type) => ({
-      id:          (type==='service'?'SV-':'PJ-') + raw.ID,
-      name:        raw.Name || raw.SiteName || 'Job '+raw.ID,
-      type,
-      status:      mapStatus(raw.Stage||raw.Status),
-      costCentre:  raw.CostCentre || raw.Section || raw.Department || null,
-      sell:        raw.TotalSell || raw.BudgetedSell || 0,
-      actual:      raw.TotalCost || raw.ActualCost || 0,
-      estMargin:   calcMargin(raw.TotalSell||raw.BudgetedSell, raw.BudgetedCost||raw.EstimatedCost),
-      actMargin:   (raw.ActualCost>0) ? calcMargin(raw.TotalSell||raw.BudgetedSell, raw.ActualCost||raw.TotalCost) : null,
-      labourEst:   raw.EstimatedLabour || raw.BudgetedLabour || 0,
-      labourAct:   raw.ActualLabour || 0,
-      plantEst:    raw.EstimatedPlant || raw.BudgetedPlant || raw.ScheduledPlant || 0,
-      plantAct:    raw.ActualPlant || 0,
-      progress:    raw.PercentComplete || 0,
-      scheduledEnd:raw.DateDue || raw.ScheduledEnd || null,
-    });
-
-    allJobs = [
-      ...(Array.isArray(svcData)?svcData:svcData.Result||[]).map(r=>mapJob(r,'service')),
-      ...(Array.isArray(projData)?projData:projData.Result||[]).map(r=>mapJob(r,'project'))
-    ];
-
-    if (!costCentres.length) {
-      costCentres = [...new Set(allJobs.map(j=>j.costCentre).filter(Boolean))].sort();
-    }
-
-    if (!allJobs.length) throw new Error('No jobs returned. Check API permissions.');
-
-    localStorage.setItem('simpro_base', base);
-    localStorage.setItem('simpro_key', key);
-    localStorage.setItem('simpro_company', companyId);
-    document.getElementById('liveStatus').className = 'badge badge-live';
-    document.getElementById('liveStatus').textContent = 'Live';
-    document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
-    document.getElementById('configPanel').classList.remove('open');
-    selectedCC = 'all';
-    buildCCChips();
-    updateMetrics(); renderTable(); renderCharts();
-
-  } catch(e) {
-    showError('Could not connect: ' + e.message);
-    loadDemo();
-  } finally {
-    document.getElementById('loadingState').style.display = 'none';
-  }
-}
-
-// ── Init ───────────────────────────────────────────────
-document.getElementById('thisOrigin').textContent = location.origin;
-
-// Restore saved credentials if available
-const savedBase = localStorage.getItem('simpro_base');
-const savedKey  = localStorage.getItem('simpro_key');
-const savedCompany = localStorage.getItem('simpro_company');
-if (savedBase) document.getElementById('apiBase').value = savedBase;
-if (savedCompany) document.getElementById('companyId').value = savedCompany;
-if (savedBase && savedKey) {
-  loadData(savedBase, savedKey, savedCompany||'0');
-} else {
-  loadDemo();
+  const pms=[...new Set(allJobs.map(j=>j.pm).filter(Boolean))];
+  const pmBilled=pms.map(p=>allJobs.filter(j=>j.pm===p).reduce((s,j)=>s+j.totalBilled,0));
+  const pmInvoice=pms.map(p=>allJobs.filter(j=>j.pm===p).reduce((s,j)=>s+j.toInvoice,0));
+  if(pmChart)pmChart.destroy();
+  pmChart=new Chart(document.getElementById('pmChart'),{type:'bar',data:{labels:pms,datasets:[{label:'Billed',data:pmBilled,backgroundColor:'#9FE1CB',borderRadius:3},{label:'To invoice',data:pmInvoice,backgroundColor:'#378ADD',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},color:'#888780',autoSkip:false,maxRotation:20},grid:{display:false}},y:{ticks:{font:{size:10},color:'#888780',callback:v=>fmtK(v)},grid:{color:'rgba(0,0,0,0.05)'}}}}});
 }
 </script>
 </body>
